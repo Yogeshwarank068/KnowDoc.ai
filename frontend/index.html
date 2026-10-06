@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KnowDoc.ai — Upload. Ask. Understand.</title>
+  <meta name="description" content="KnowDoc.ai: Modern, premium AI Document Question & Answer application powered by Open Knowledge Format (OKF) and Google Gemini.">
+
+  <!-- Google Fonts: Poppins (Global Primary) & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+  <!-- KaTeX for Clean Mathematical Formula & Equation Rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
+
+  <!-- Instant Dynamic Theme Adaptation (Light / Dark Mode Synchronizer) -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('knowdoc-theme') || localStorage.getItem('knowdoc_theme') || 'dark';
+        var isLight = saved === 'light';
+        var doc = document.documentElement;
+        doc.setAttribute('data-theme', isLight ? 'light' : 'dark');
+        doc.classList.toggle('light-theme', isLight);
+        doc.classList.toggle('dark-theme', !isLight);
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Vanilla CSS3 Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('knowdoc-theme') || localStorage.getItem('knowdoc_theme') || 'dark';
+        document.body.className = saved === 'light' ? 'light-theme' : 'dark-theme';
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- ========================================================================= -->
+  <!-- 1. OPENING SPLASH SCREEN (PURE CSS + JS ANIMATION)                        -->
+  <!-- ========================================================================= -->
+  <div id="splashScreen" class="splash-screen" role="dialog" aria-label="Loading KnowDoc.ai" aria-modal="true">
+    <div class="splash-content">
+      <!-- KnowDoc.ai Glowing Squircle Emblem -->
+      <div class="splash-emblem-wrapper">
+        <div class="splash-emblem-glow"></div>
+        <div class="splash-emblem-squircle">
+          <svg viewBox="0 0 48 48" width="36" height="36" fill="none">
+            <path class="splash-svg-doc" d="M12 8C12 5.79086 13.7909 4 16 4H28L38 14V40C38 42.2091 36.2091 44 34 44H16C13.7909 44 12 42.2091 12 40V8Z" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-width="2.5"/>
+            <polyline class="splash-svg-fold" points="28 4 28 14 38 14" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path class="splash-svg-lines" d="M20 24H30M20 31H27" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+            <circle class="splash-svg-dot" cx="34" cy="34" r="5" fill="#38bdf8"/>
+            <path class="splash-svg-plus" d="M34 31V37M31 34H37" stroke="#090b0e" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Title & Tagline -->
+      <h1 class="splash-title">KnowDoc.ai</h1>
+      <p class="splash-tagline">Upload. Ask. Understand.</p>
+
+      <!-- 3 Animated Loading Dots -->
+      <div class="splash-dots" aria-hidden="true">
+        <span class="splash-dot"></span>
+        <span class="splash-dot"></span>
+        <span class="splash-dot"></span>
+      </div>
+
+      <!-- Progress Line -->
+      <div class="splash-progress-track">
+        <div class="splash-progress-bar"></div>
+      </div>
+      <span class="splash-status-text">Grounding Document Knowledge...</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 2. MAIN APPLICATION SHELL (AUTHENTIC CHATGPT LAYOUT)                      -->
+  <!-- ========================================================================= -->
+  <div id="appShell" class="app-shell" style="opacity: 0;">
+
+    <!-- Unified ChatGPT Left Sidebar (Dedicated Documents, Recent Chats & Settings) -->
+    <aside id="chatgptSidebar" class="chatgpt-sidebar" aria-label="KnowDoc.ai Sidebar">
+
+      <!-- Collapsed Icon-Only Rail Navigation (Requirement 3: Exactly 5 vertical icons) -->
+      <div class="sidebar-rail-items" id="sidebarRailItems">
+        <!-- 1. Top Brand / Toggle Icon: Click to expand sidebar back to full view -->
+        <button id="railBrandToggleBtn" class="rail-icon-btn rail-brand-btn" type="button" data-tooltip="Expand sidebar" aria-label="Expand sidebar">
+          <div class="brand-square-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+              <path d="M6 3h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="var(--logo-doc-fill)" stroke="var(--logo-doc-stroke)" stroke-width="1.8"/>
+              <polyline points="14 3 14 9 20 9" stroke="var(--logo-fold-stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="16" cy="16" r="3.5" fill="var(--logo-accent-dot)"/>
+            </svg>
+          </div>
+        </button>
+
+        <!-- 2. New Chat Icon: Clean '+' icon to trigger a new session -->
+        <button id="railNewChatBtn" class="rail-icon-btn" type="button" data-tooltip="New chat" aria-label="New chat">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+
+        <!-- 3. Upload Document Icon: Upload cloud/arrow icon with active document count badge indicator -->
+        <button id="railUploadDocBtn" class="rail-icon-btn rail-upload-btn" type="button" data-tooltip="Upload documents" aria-label="Upload documents">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span id="railDocCountBadge" class="rail-counter-badge" style="display: none;">0</span>
+        </button>
+
+        <!-- 4. Recent Chats / Search Icon: Browse chat history -->
+        <button id="railRecentChatsBtn" class="rail-icon-btn" type="button" data-tooltip="Recent chats" aria-label="Recent chats">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
+
+        <!-- Flexible Spacer pushing Profile to the bottom of the rail -->
+        <div class="rail-spacer"></div>
+
+        <!-- 5. Bottom Profile Icon: Circular 'JD' avatar docked at the bottom -->
+        <button id="railUserProfileBtn" class="rail-icon-btn rail-avatar-btn" type="button" data-tooltip="John Doe (Profile)" aria-label="User Profile">
+          <div class="sidebar-avatar rail-avatar">JD</div>
+          <span class="status-online-dot rail-dot"></span>
+        </button>
+      </div>
+
+      <!-- Expanded Sidebar Content Container (Visible in Full View) -->
+      <div class="sidebar-expanded-content" id="sidebarExpandedContent">
+        <!-- 1. Sidebar Top Header: KnowDoc.ai Brand Title -->
+        <div class="sidebar-top-header">
+          <div class="brand-container" id="sidebarBrandHomeBtn" title="Collapse sidebar" role="button" tabindex="0">
+            <div class="brand-square-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                <path d="M6 3h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" fill="var(--logo-doc-fill)" stroke="var(--logo-doc-stroke)" stroke-width="1.8"/>
+                <polyline points="14 3 14 9 20 9" stroke="var(--logo-fold-stroke)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="16" cy="16" r="3.5" fill="var(--logo-accent-dot)"/>
+              </svg>
+            </div>
+            <span class="brand-name">KnowDoc.ai</span>
+          </div>
+        </div>
+
+        <!-- 2. Sidebar Header Action: Prominent + New Chat Button (Directly Below Brand & Toggle) -->
+        <div class="sidebar-header-action">
+          <button id="sidebarNewChatBtn" class="sidebar-new-chat-btn" type="button" title="Start New Conversation">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>New Chat</span>
+          </button>
+        </div>
+
+        <!-- Sidebar Scroll Area: Documents & Recent Chats -->
+        <div class="sidebar-content-scroll">
+          
+          <!-- 1. Dedicated Document View & Upload Section (Requirement 1) -->
+          <div class="sidebar-section sidebar-docs-section">
+            <div class="sidebar-section-header">
+              <span class="sidebar-section-title">Knowledge Documents</span>
+              <span id="sidebarDocCountBadge" class="sidebar-counter-chip">0</span>
+            </div>
+
+            <!-- Upload Document Button -->
+            <button id="sidebarUploadDocBtn" class="sidebar-upload-btn" type="button" title="Upload Document (Max 20 MB)">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Upload Document</span>
+            </button>
+
+            <!-- Active Document List with file icon, name, size, delete button -->
+            <div id="sidebarDocsList" class="sidebar-docs-list">
+              <!-- Dynamically populated document cards by script.js -->
+            </div>
+          </div>
+
+          <!-- 2. Recent Chats Section (Directly Below Documents) -->
+          <div class="sidebar-section sidebar-chats-section">
+            <div class="sidebar-section-header">
+              <span class="sidebar-section-title">Recent Chats</span>
+            </div>
+            <div id="sidebarChatList" class="sidebar-items-list">
+              <!-- Dynamically populated recent chat items with smart titles -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+          <!-- Settings Button (Directly above User Profile) -->
+          <button id="sidebarSettingsBtn" class="sidebar-footer-btn" title="Settings & Knowledge Base" type="button">
+            <span class="settings-icon-wrap">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+            </span>
+            <span>Settings</span>
+          </button>
+
+          <!-- User Profile Row -->
+          <div class="sidebar-user-row" id="sidebarUserProfileBtn" title="John Doe (Enterprise Workspace)">
+            <div class="sidebar-avatar">JD</div>
+            <div class="sidebar-user-info">
+              <span class="user-display-name">John Doe</span>
+              <span class="user-plan-tag">Enterprise Workspace</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Sidebar Mobile Backdrop Overlay -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+    <!-- Main Workspace Column -->
+    <div class="main-layout-area">
+
+      <!-- Top Navigation Header -->
+      <header class="top-nav-bar">
+        <div class="top-nav-left"></div>
+
+        <!-- Top-Right Actions: 1. Theme Toggle, 2. + New Chat, 3. User Profile Badge -->
+        <div class="top-nav-actions">
+          <!-- 1. Theme Toggle Button -->
+          <button id="btnHeaderThemeToggle" class="circular-icon-btn theme-toggle-btn" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
+            <svg class="header-moon-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="header-sun-icon" style="display:none;" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+
+          <!-- 2. New Chat Button (+ New Chat) -->
+          <button id="btnHeaderNewChat" class="header-action-pill-btn header-new-chat-btn" title="Start New Conversation" aria-label="New Chat">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+            <span>New Chat</span>
+          </button>
+
+          <!-- 3. User Profile Badge ('JD' avatar circle) -->
+          <div class="profile-menu-container">
+            <button id="btnUserProfile" class="user-avatar-btn" title="Account & Workspace" aria-label="User Profile">
+              <span class="avatar-initials">JD</span>
+              <span class="status-online-dot"></span>
+            </button>
+            
+            <!-- Profile Dropdown -->
+            <div id="userProfileDropdown" class="profile-dropdown-menu" style="display: none;">
+              <div class="profile-dropdown-header">
+                <div class="profile-avatar-lg">JD</div>
+                <div class="profile-info-col">
+                  <span class="profile-user-name">John Doe</span>
+                  <span class="profile-user-role">Enterprise Workspace</span>
+                </div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" id="menuActionToggleTheme" type="button">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                <span id="menuThemeText">Switch to Light Mode</span>
+              </button>
+              <button class="dropdown-item" id="menuActionNewChat" type="button">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>New Conversation</span>
+              </button>
+              <button class="dropdown-item" id="menuActionUpload" type="button">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Upload Documents</span>
+              </button>
+              <button class="dropdown-item" id="menuActionClearHistory" type="button">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                <span>Clear Conversation</span>
+              </button>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item danger" id="menuActionLogout" type="button">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span>Log Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Workspace Container -->
+      <main class="main-workspace">
+
+        <!-- Scrollable Message Feed & Welcome Hero -->
+        <div id="messagesContainer" class="messages-viewport">
+          
+          <!-- Centered Balanced Chat Feed Column (Equal Auto Margins) -->
+          <div class="chat-feed-container" id="chatFeedContainer">
+
+            <!-- ================================================================= -->
+            <!-- CENTER HERO AREA (Centered Greeting & Subtitle)                   -->
+            <!-- ================================================================= -->
+            <div id="welcomeScreen" class="hero-centerpiece">
+              
+              <!-- Center prominent floating badge: Theme-adapting squircle emblem -->
+              <div class="hero-badge-container">
+                <div class="hero-badge-ambient-glow"></div>
+                <div class="hero-badge-squircle">
+                  <svg viewBox="0 0 64 64" width="46" height="46" fill="none">
+                    <rect x="12" y="8" width="36" height="48" rx="8" fill="var(--logo-doc-fill)" stroke="var(--logo-doc-stroke)" stroke-width="3"/>
+                    <polyline points="32 8 32 20 48 20" stroke="var(--logo-fold-stroke)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    <line x1="22" y1="30" x2="38" y2="30" stroke="var(--logo-doc-stroke)" stroke-width="2.6" stroke-linecap="round"/>
+                    <line x1="22" y1="38" x2="34" y2="38" stroke="var(--logo-doc-stroke)" stroke-width="2.6" stroke-linecap="round"/>
+                    <circle cx="42" cy="42" r="7" fill="var(--logo-accent-dot)"/>
+                    <path d="M42 38V46M38 42H46" stroke="var(--logo-bg)" stroke-width="2.5" stroke-linecap="round"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Main Greeting -->
+              <h1 class="hero-greeting" id="heroGreetingText">
+                Hi, John Doe<br>
+                Can I help you with anything?
+              </h1>
+
+              <!-- Subtitle -->
+              <p class="hero-subtitle">
+                Upload your files and ask questions about the information inside them.<br>
+                Ready to assist with summaries, insights, and structured data extraction.
+              </p>
+
+            </div>
+
+            <!-- Dynamic Conversational Stream -->
+            <div id="chatStream" class="chat-stream">
+              <!-- Messages will be injected here dynamically -->
+            </div>
+
+            <!-- Thinking Animation Indicator (Centered within chat column) -->
+            <div id="thinkingIndicator" class="thinking-status-bubble" style="display: none;" aria-live="polite">
+              <div class="thinking-avatar-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <div class="thinking-text-group">
+                <span class="thinking-label">KnowDoc.ai is thinking...</span>
+                <div class="thinking-dots-anim">
+                  <span class="t-dot"></span>
+                  <span class="t-dot"></span>
+                  <span class="t-dot"></span>
+                </div>
+              </div>
+            </div>
+
+          </div> <!-- .chat-feed-container -->
+
+        </div>
+
+      <!-- ================================================================= -->
+      <!-- FLOATING INPUT DOCK (BOTTOM - EXACT REFERENCE DESIGN)             -->
+      <!-- ================================================================= -->
+      <footer class="floating-dock-wrapper">
+        <div class="floating-capsule-dock" id="floatingDock">
+
+          <!-- Left Dock Actions: Clean Upload (+) Only -->
+          <div class="dock-actions-left">
+            <!-- Circular "+" Button to upload documents -->
+            <button id="btnInputAttach" type="button" class="dock-circle-btn dock-plus-btn" title="Upload Document (Max 20 MB)" aria-label="Upload Document">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+
+          <!-- Input Textarea -->
+          <div class="dock-input-field-wrapper">
+            <textarea
+              id="chatInput"
+              class="dock-textarea"
+              rows="1"
+              placeholder="Ask me anything you want"
+              aria-label="Ask me anything you want"
+            ></textarea>
+          </div>
+
+          <!-- Right Dock Actions -->
+          <div class="dock-actions-right">
+            <!-- Voice Button (Web Speech API) -->
+            <button id="btnVoiceInput" type="button" class="dock-tool-icon-btn" title="Voice Input" aria-label="Voice Input">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+
+            <!-- Direct Send Button -->
+            <button id="btnSend" type="button" class="dock-send-btn" title="Submit Question (Enter)" disabled aria-label="Submit Question">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Discreet Footer Note -->
+        <p class="dock-footer-disclaimer">
+          KnowDoc.ai answers are strictly grounded in your uploaded documents. Maximum file size: 20 MB.
+        </p>
+      </footer>
+
+    </main>
+    </div> <!-- .main-layout-area -->
+
+
+    <!-- ===================================================================== -->
+    <!-- 4. SLIDE-OUT DRAWER: DOCUMENT PREVIEW & SOURCES (RIGHT/SLIDE-IN)       -->
+    <!-- ===================================================================== -->
+    <aside id="previewPanel" class="slide-drawer drawer-right" role="dialog" aria-label="Document Preview & Sources" aria-hidden="true">
+      <div class="drawer-header">
+        <div class="drawer-title-box">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <h3 class="drawer-heading">Document Preview & Sources</h3>
+        </div>
+        <button id="btnClosePreview" class="drawer-close-btn" aria-label="Close Preview">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Selector Bar -->
+      <div class="preview-selector-bar">
+        <select id="previewDocSelect" class="drawer-select" aria-label="Select preview document">
+          <option value="">Select a document to inspect...</option>
+        </select>
+      </div>
+
+      <!-- Metadata Bar -->
+      <div id="previewMetaBar" class="preview-meta-bar" style="display: none;">
+        <span class="meta-tag">Type: <strong id="previewMetaType">PDF</strong></span>
+        <span class="meta-tag">Size: <strong id="previewMetaSize">1.2 MB</strong></span>
+        <span class="meta-tag" id="previewMetaSpecific"><span class="meta-specific-label">Sheets:</span> <strong id="previewMetaSpecificVal">2</strong></span>
+        <span class="okf-pill-badge">Grounded Knowledge</span>
+      </div>
+
+      <!-- Content Viewer Container -->
+      <div id="previewRenderer" class="preview-content-area">
+        <div id="previewEmptyState" class="preview-empty-note">
+          <svg viewBox="0 0 24 24" width="38" height="38" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <p>Select a document or click any citation chip in an answer to highlight exact sheets, cell ranges, or paragraphs.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Drawer Backdrop Overlay -->
+    <div id="drawerBackdrop" class="drawer-backdrop-overlay"></div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 5. DRAG & DROP UPLOAD MODAL (WITH STRICT 20 MB VALIDATION)                 -->
+  <!-- ========================================================================= -->
+  <div id="uploadModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="uploadModalTitle">
+    <div class="glass-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <h3 id="uploadModalTitle" class="modal-heading">Upload Knowledge Documents</h3>
+        </div>
+        <button id="btnCloseUploadModal" class="modal-close-icon" aria-label="Close Modal">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        
+        <!-- Dropzone Container -->
+        <div id="dropZone" class="glass-dropzone" tabindex="0" role="button" aria-label="Drop files here or click to browse">
+          <input type="file" id="fileInput" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.csv,.pptx,.ppt,.txt,.json,.md,.markdown" style="display: none;">
+          
+          <div class="dropzone-badge">
+            <svg viewBox="0 0 48 48" width="40" height="40" fill="none">
+              <path d="M8 14C8 11.7909 9.79086 10 12 10H20L24 14H36C38.2091 14 40 15.7909 40 18V34C40 36.2091 38.2091 38 36 38H12C9.79086 38 8 36.2091 8 34V14Z" stroke="#38bdf8" stroke-width="2.5" fill="rgba(56, 189, 248, 0.08)"/>
+              <path d="M24 22V32M24 22L20 26M24 22L28 26" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <h4 class="dropzone-title">Upload your documents</h4>
+          <p class="dropzone-subtitle">Drag & drop files here, or browse from device</p>
+          
+          <button id="btnBrowseFiles" type="button" class="btn-primary-browse">
+            <span>Browse Files</span>
+          </button>
+
+          <p class="dropzone-formats">PDF • Word • Excel • CSV • PowerPoint • TXT • JSON • Markdown</p>
+          <p class="dropzone-limit-note">Maximum 20 MB per file limit strictly enforced</p>
+        </div>
+
+        <!-- Visual Processing Progress -->
+        <div id="processingList" class="processing-pipeline-box" style="display: none;">
+          <h5 class="processing-title">Processing Document Knowledge</h5>
+          <div id="processingItems" class="processing-items-container">
+            <!-- Dynamic step-by-step progress cards injected by script.js -->
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button id="btnDoneUpload" type="button" class="btn-primary-browse" style="display: none;">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 6. SETTINGS & KNOWLEDGE BASE MODAL (RELOCATED FROM TOP HEADER)            -->
+  <!-- ========================================================================= -->
+  <div id="settingsModal" class="modal-overlay" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    <div class="glass-modal-card settings-modal-card">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <h3 id="settingsModalTitle" class="modal-heading">Settings &amp; Knowledge Base</h3>
+        </div>
+        <button id="btnCloseSettingsModal" class="modal-close-icon" aria-label="Close Settings">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="modal-body settings-modal-body">
+        <!-- Section: Uploaded Knowledge Documents -->
+        <div class="settings-section">
+          <div class="settings-section-header">
+            <div>
+              <h4 class="settings-section-title">Knowledge Base Documents</h4>
+              <p class="settings-section-desc">Manage files used to ground KnowDoc.ai answers.</p>
+            </div>
+            <button id="btnSettingsUploadDoc" type="button" class="btn-settings-action-primary">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Upload Document</span>
+            </button>
+          </div>
+
+          <div class="settings-docs-header-bar">
+            <span class="settings-docs-sublabel">Uploaded Documents</span>
+            <span id="settingsDocCountBadge" class="settings-count-badge">0 active</span>
+          </div>
+
+          <div id="settingsDocsList" class="settings-docs-list">
+            <!-- Dynamically populated document items or empty state -->
+          </div>
+        </div>
+
+        <!-- Section: Appearance & Preferences -->
+        <div class="settings-section">
+          <h4 class="settings-section-title">Appearance &amp; Theme</h4>
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <span class="settings-row-label">Interface Theme</span>
+              <span class="settings-row-sub">Toggle between Dark and Light mode</span>
+            </div>
+            <button id="settingsThemeToggleBtn" type="button" class="btn-settings-action-secondary">
+              <span id="settingsThemeIcon" class="theme-icon-wrap">
+                <svg class="theme-moon-svg" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                <svg class="theme-sun-svg" style="display:none;" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              </span>
+              <span id="settingsThemeLabel">Switch Mode</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Section: Conversation History Management -->
+        <div class="settings-section">
+          <h4 class="settings-section-title">Data &amp; Conversation</h4>
+          <div class="settings-row">
+            <div class="settings-row-text">
+              <span class="settings-row-label">Clear Conversation</span>
+              <span class="settings-row-sub">Reset current chat session and start fresh</span>
+            </div>
+            <button id="btnSettingsClearHistory" type="button" class="btn-settings-action-danger">
+              Clear Current Chat
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-portal-container" aria-live="assertive"></div>
+
+  <!-- Modular Vanilla JavaScript ES6+ -->
+  <script src="script.js"></script>
+</body>
+</html>
